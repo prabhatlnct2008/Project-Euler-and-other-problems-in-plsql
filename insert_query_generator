@@ -1,4 +1,5 @@
-create or replace procedure gen_insert_query (lvc_tab_name varchar2 )
+create or replace 
+procedure gen_insert_query (lvc_tab_name varchar2 )
 is
 lvc_desc_tab dbms_sql.desc_tab ;
 lvc_num_var number ;
@@ -15,10 +16,10 @@ begin
   dbms_sql.parse(cur , 'select * from '||lvc_tab_name||' order by 1' , dbms_sql.native) ;
   dbms_sql.describe_columns(cur , lvc_col_count , lvc_desc_tab) ;
   
-  insert_query_header := 'insert into '||lvc_tab_name||' values (' ;
+  insert_query_header := 'insert into '||lvc_tab_name||'(' ;
 
   for i in 1 .. lvc_col_count loop
-    insert_query_header := insert_query_header||lvc_desc_tab(i).col_name||case when i <> lvc_col_count then ',' else ')'||chr(10)||'(' end ;
+    insert_query_header := insert_query_header||lvc_desc_tab(i).col_name||case when i <> lvc_col_count then ',' else ')'||chr(10)||'values (' end ;
     if lvc_desc_tab(i).col_type = 2 then 
       dbms_sql.define_column(cur , i , lvc_num_var)  ;
     elsif lvc_desc_tab(i).col_type = 12 then 
@@ -45,12 +46,12 @@ begin
        elsif lvc_desc_tab(i).col_type  =  112 then
         dbms_sql.column_value(cur , i  , lvc_clob_var) ; 
         insert_query_txt :=insert_query_txt||case when lvc_clob_var is null then 'null' else 
-                           q'!'!'||lvc_clob_var||q'!'!' end ||
+                           'q''!'||lvc_clob_var||'!''' end ||
                            case when i <> lvc_col_count then ',' else ');'||chr(10) end ;
        else 
         dbms_sql.column_value(cur , i , lvc_char_var) ;
         insert_query_txt :=insert_query_txt||case when lvc_char_var is null then 'null' else 
-                           q'!'!'||lvc_char_var||q'!'!' end||
+                           'q''!'||lvc_char_var||'!''' end||
                            case when i <> lvc_col_count then ',' else ');'||chr(10) end ;        
        end if ;
     end loop ;
@@ -60,4 +61,3 @@ begin
   exception when others then
     dbms_output.put_line(sqlerrm||chr(10)||dbms_utility.format_error_stack) ;
 end gen_insert_query ;
-
